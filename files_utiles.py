@@ -1,0 +1,166 @@
+import requests
+import re
+import regex
+from bs4 import BeautifulSoup, NavigableString, Comment
+from typing import Dict, Optional, List
+import time
+import os
+import copy
+import pandas as pd
+from io import StringIO
+
+from scraper_helper import *
+
+def replace_urls_with_placeholder(text: str, placeholder: str = "[URL IGNORÉE]") -> str:
+    """
+    Replaces all URLs in the text with a placeholder.
+
+    :param text: The original text.
+    :param placeholder: The placeholder to replace URLs with.
+    :return: The text with URLs replaced by the placeholder.
+    """
+    url_pattern = r"https?://[^\s]+"
+    return re.sub(url_pattern, placeholder, text)
+
+def clean_text(description: str) -> str:
+    """
+    Cleans up the `description`.
+
+    :param description: The text to be cleaned up.
+    :return: The cleaned string.
+    """
+
+    # Replace URLs with a placeholder
+    description = replace_urls_with_placeholder(description)
+
+    # Removing [x] characters (e.g. [1], [2]...).
+    text = re.sub(r'\[\d+]', '', description)
+
+    # Removing consecutive special characters (non-alphanumeric) except the point.
+    text = re.sub(r'([^\w\s.])\1+', r'\1', text)
+
+    # Adding spaces before certain punctuations (French style).
+    text = re.sub(r'([!?;:])', r' \1', text)
+
+    # Removing spaces before certain punctuations (French style).
+    text = re.sub(r'\s+([.,…»)])', r'\1', text)
+
+    # Removing spaces after apostrophe.
+    text = re.sub(r"'\s+", "'", text)
+
+    # Removing extra symbols.
+    text = regex.sub(r'[\p{So}ᐉ⓵⓶⓷←ᐖᐄᐛ]', '', text)
+
+    text = text.strip()
+
+    return text
+
+def save_data_to_file(data: Optional[Dict[str, object]], folder_name, file_name):
+    """
+    Saves data to a text file in a specific folder.
+
+    :param data: The data to be saved.
+    :param folder_name: The folder in which to save the files.
+    :param file_name: The file name.
+
+    :return: None
+    """
+    if data is None:
+        return
+
+    title = data.get('title', "")
+    text_main_content = data.get('text_main_content', "")
+    ambre_table = data.get('ambre_table', {})
+
+    if not text_main_content.strip() and not ambre_table:
+        return
+
+    os.makedirs(folder_name, exist_ok=True)
+
+    file_path = os.path.join(folder_name, file_name)
+
+    with open(file_path, "w", encoding="utf-8") as file:
+
+        file.write(clean_text(title) + "\n\n\n")
+
+        if isinstance(text_main_content, str) and text_main_content.strip():
+            file.write(clean_text(text_main_content) + "\n\n")
+
+        if isinstance(ambre_table, dict) and ambre_table:
+            file.write("[Tableau résumé]\n")
+            for key, value in ambre_table.items():
+                if(value == ""):
+                    file.write(f"{clean_text(key)}\n")
+                else:
+                    file.write(f"{clean_text(key)}: {clean_text(value)}\n")
+
+
+
+def get_all_links_from_pagination(base_url, all_pages_url):
+    """
+    Crawl all pages from the start URL and follow the pagination to retrieve all links.
+
+    :param all_pages_url: The URL of the page that references all the wiki pages.
+    :param base_url: The base URL of the wiki site.
+
+    :return: A list of all wiki page links.
+    """
+    all_links = set()
+    current_url = all_pages_url
+
+    # Loop on all "All Pages" pages.
+    while current_url:
+
+        print(f"Processing: {current_url}")
+        response = requests.get(current_url)
+        if response.status_code != 200:
+            print(f"Failed to fetch: {current_url}")
+            break
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Extract links from the "All Pages" page.
+        for link in soup.select("div.mw-allpages-body a"):
+            href = link.get("href")
+            if href and href.startswith("/wiki/"):
+                if "mw-redirect" in link.get("class", []):
+                    continue
+                all_links.add(base_url + href)
+
+        # Find the "next page" link of the "All Pages" page.
+        next_page = soup.find("a", string=lambda t: t and t.startswith("Page suivante"))
+        if next_page:
+            next_url = next_page.get("href")
+            current_url = base_url + next_url
+            time.sleep(1)
+        else:
+            current_url = None
+
+    return list(all_links)
+
+
+def sanitize_filename(filename):
+    """
+    Clean the files names to remove not-valid character.
+    :param filename: The raw title.
+    :return: A valid file name.
+    """
+    invalid_chars = '<>:"/\\|?*'
+    for char in invalid_chars:
+        filename = filename.replace(char, "_")
+    return filename
+
+
+def log_error(message, error_log_file="errors.log"):
+    """
+    Sage error messages.
+    """
+    with open(error_log_file, "a", encoding="utf-8") as log_file:
+        log_file.write(message + "\n")
+
+
+def is_ignored_url(url, ignored_urls):
+    """
+    Check if a URL is in  the list of URL to ignore, or start with one of these URL.
+    """
+    return any(url.startswith(ignored) for ignored in ignored_urls)
