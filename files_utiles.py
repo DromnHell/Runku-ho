@@ -10,6 +10,7 @@ import pandas as pd
 from io import StringIO
 
 from scraper_helper import *
+from scraper_rules import URL_TO_NOT_SCRAP, EXTRA_URL_TO_SCRAP
 
 def replace_urls_with_placeholder(text: str, placeholder: str = "[URL IGNORÉE]") -> str:
     """
@@ -108,10 +109,11 @@ def get_all_links_from_pagination(base_url, all_pages_url):
     all_links = set()
     current_url = all_pages_url
 
-    # Loop on all "All Pages" pages.
+    # Loop on all "All Pages" pages of the wiki.
+    i = 1
     while current_url:
 
-        print(f"Processing: {current_url}")
+        print(f"Processing links from 'All pages' {i}: {current_url}")
         response = requests.get(current_url)
         if response.status_code != 200:
             print(f"Failed to fetch: {current_url}")
@@ -123,7 +125,8 @@ def get_all_links_from_pagination(base_url, all_pages_url):
         for link in soup.select("div.mw-allpages-body a"):
             href = link.get("href")
             if href and href.startswith("/wiki/"):
-                if "mw-redirect" in link.get("class", []):
+                if ("mw-redirect" in link.get("class", [])
+                        or is_ignored_url(base_url + href, URL_TO_NOT_SCRAP)):
                     continue
                 all_links.add(base_url + href)
 
@@ -135,6 +138,13 @@ def get_all_links_from_pagination(base_url, all_pages_url):
             time.sleep(1)
         else:
             current_url = None
+
+        i += 1
+
+    # Extract links from pages that are not referenced in the “All pages” pages. EXTRA_URL_TO_SCRAP
+    print(f"Processing extra wiki pages link.")
+    for extra_wiki_link in EXTRA_URL_TO_SCRAP:
+        all_links.add(extra_wiki_link)
 
     return list(all_links)
 

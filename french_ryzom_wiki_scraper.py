@@ -387,16 +387,16 @@ def scrape_useful_page_content(url: str) -> Optional[Dict[str, object]]:
     }
 
 if __name__ == "__main__":
-    base_url = "https://fr.wiki.ryzom.com/wiki/Petits_Carnets_Trytoniens"
+    '''   base_url = "https://fr.wiki.ryzom.com/wiki/Wuaoi_Yai-Zhio/%C3%80_propos_d%27Oflovak_Rydon"
 
-    if is_ignored_url(base_url, IGNORED_URLS):
+    if is_ignored_url(base_url, URL_TO_NOT_SCRAP):
         print(f"URL ignored : {base_url}")
     else:
         folder_name = "french_ryzom_wiki_pages"
         data = scrape_useful_page_content(base_url)
         save_data_to_file(data, folder_name,"test.txt")
+        '''
 
-'''
     base_url = "https://fr.wiki.ryzom.com"
     all_pages_url = f"{base_url}/wiki/Sp%C3%A9cial:Toutes_les_pages"
     folder_name = "french_ryzom_wiki_pages"
@@ -406,7 +406,7 @@ if __name__ == "__main__":
     all_links = get_all_links_from_pagination(base_url, all_pages_url)
     print(f"{len(all_links)} pages found.")
 
-    for idx, url in enumerate(all_links):
+    '''for idx, url in enumerate(all_links):
         if idx > 3:
             break
         print(f"[{idx + 1}/{len(all_links)}] Extraction of {url}...")
