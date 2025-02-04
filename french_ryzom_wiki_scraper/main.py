@@ -404,7 +404,7 @@ if __name__ == "__main__":
 
     base_url = "https://fr.wiki.ryzom.com"
     all_pages_url = f"{base_url}/wiki/Sp%C3%A9cial:Toutes_les_pages"
-    folder_name = "french_ryzom_wiki_pages"
+    folder_name = "../french_ryzom_wiki_pages"
     error_log_file = "errors.log"
 
     print("Retrieve links..")
