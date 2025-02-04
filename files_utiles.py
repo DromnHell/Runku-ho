@@ -8,6 +8,7 @@ import os
 import copy
 import pandas as pd
 from io import StringIO
+import urllib.parse
 
 from scraper_helper import *
 from scraper_rules import URL_TO_NOT_SCRAP, EXTRA_URL_TO_SCRAP
@@ -23,7 +24,7 @@ def replace_urls_with_placeholder(text: str, placeholder: str = "[URL IGNORÉE]"
     url_pattern = r"https?://[^\s]+"
     return re.sub(url_pattern, placeholder, text)
 
-def clean_text(description: str) -> str:
+def clean_text_before_extraction(description: str) -> str:
     """
     Cleans up the `description`.
 
@@ -82,18 +83,18 @@ def save_data_to_file(data: Optional[Dict[str, object]], folder_name, file_name)
 
     with open(file_path, "w", encoding="utf-8") as file:
 
-        file.write(clean_text(title) + "\n\n\n")
+        file.write(clean_text_before_extraction(title) + "\n\n\n")
 
         if isinstance(text_main_content, str) and text_main_content.strip():
-            file.write(clean_text(text_main_content) + "\n\n")
+            file.write(clean_text_before_extraction(text_main_content) + "\n\n")
 
         if isinstance(ambre_table, dict) and ambre_table:
             file.write("[Tableau résumé]\n")
             for key, value in ambre_table.items():
                 if(value == ""):
-                    file.write(f"{clean_text(key)}\n")
+                    file.write(f"{clean_text_before_extraction(key)}\n")
                 else:
-                    file.write(f"{clean_text(key)}: {clean_text(value)}\n")
+                    file.write(f"{clean_text_before_extraction(key)}: {clean_text_before_extraction(value)}\n")
 
 
 
@@ -135,7 +136,7 @@ def get_all_links_from_pagination(base_url, all_pages_url):
         if next_page:
             next_url = next_page.get("href")
             current_url = base_url + next_url
-            time.sleep(1)
+            time.sleep(0.25)
         else:
             current_url = None
 
@@ -156,9 +157,10 @@ def sanitize_filename(filename):
     :return: A valid file name.
     """
     invalid_chars = '<>:"/\\|?*'
+    decoded_filename = urllib.parse.unquote(filename)
     for char in invalid_chars:
-        filename = filename.replace(char, "_")
-    return filename
+        decoded_filename = decoded_filename.replace(char, "_")
+    return decoded_filename
 
 
 def log_error(message, error_log_file="errors.log"):

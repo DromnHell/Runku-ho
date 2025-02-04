@@ -45,6 +45,11 @@ def get_custom_text(element, ambre_table = False)  -> str:
         if child.name in excluded_tags:
             continue
 
+        # Skip excluded tags
+        if child.name == "br":
+            text_parts.append("\n")
+            continue
+
         # Add the text content directly, stripping unnecessary spaces.
         if isinstance(child, NavigableString):
             text_parts.append(child.strip())

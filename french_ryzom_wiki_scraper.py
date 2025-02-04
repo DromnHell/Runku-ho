@@ -80,17 +80,17 @@ def process_description_list(child, lines) -> bool:
         process_table(table, lines)
         return True
 
-    # Process <dt> elements
+    # Process <dt> elements and their corresponding <dd> elements
     for dt in child.find_all("dt", recursive=False):
         dt_text = get_custom_text(dt)
         if dt_text:
-            lines.append(f"- {dt_text})")
+            lines.append(f"- {dt_text}")
 
-    # Process the <dd> child within the <dl>
-    for dd in child.find_all("dd", recursive=False):
-        dd_text = get_custom_text(dd)
-        if dd_text:
-            lines.append(f"- {dd_text}")
+        # Find all <dd> elements that are direct siblings of the current <dt>
+        for dd in dt.find_next_siblings("dd"):
+            dd_text = get_custom_text(dd)
+            if dd_text:
+                lines.append(f"  - {dd_text}")  # Indented for clarity
 
     return True
 
@@ -171,7 +171,9 @@ def process_paragraph(child, lines) -> bool:
     :return: True.
     """
     text = get_custom_text(child)
-    if text:
+    if (text
+            and text != "Cette page est une ébauche à compléter."
+            and text != "Pour aider l'Encyclopatys, Discutez-en ou améliorez-la !"):
         lines.append(text)
     return True
 
@@ -226,9 +228,9 @@ def process_table(child, lines) -> bool:
 
     return True
 
-def process_div_without_nested_div(child, lines) -> bool:
+def process_div_without_nested_elements(child, lines) -> bool:
     """
-    Add the text of a <div> only if the <div> doesn't contain another <div>.
+    Add the text of a <div> only if the <div> doesn't contain another <div>, <pan> or <p>.
     This is to manage the rare cases where relevant text is located in raw <div> without <p> tag for example.
 
     :param child: The HTML element to process.
@@ -236,7 +238,9 @@ def process_div_without_nested_div(child, lines) -> bool:
 
     :return: True if the function is process. False otherwise.
     """
-    if not child.find("div", recursive=True):
+    if not child.find("div", recursive=True)\
+            and not child.find("span", recursive=True)\
+            and not child.find("p", recursive=True):
         text = get_custom_text(child)
         if text:
             lines.append(text)
@@ -290,7 +294,7 @@ def extract_ordered_content(element):
 
             # b) Process <div> elements.
             if child.name == "div":
-                if process_div_without_nested_div(child, lines):
+                if process_div_without_nested_elements(child, lines):
                     i += 1
                     continue
 
@@ -387,15 +391,16 @@ def scrape_useful_page_content(url: str) -> Optional[Dict[str, object]]:
     }
 
 if __name__ == "__main__":
-    '''   base_url = "https://fr.wiki.ryzom.com/wiki/Wuaoi_Yai-Zhio/%C3%80_propos_d%27Oflovak_Rydon"
+
+    '''base_url = "https://fr.wiki.ryzom.com/wiki/Lexique_des_termes_RP"
 
     if is_ignored_url(base_url, URL_TO_NOT_SCRAP):
         print(f"URL ignored : {base_url}")
     else:
         folder_name = "french_ryzom_wiki_pages"
         data = scrape_useful_page_content(base_url)
-        save_data_to_file(data, folder_name,"test.txt")
-        '''
+        save_data_to_file(data, folder_name,"test.txt")'''
+
 
     base_url = "https://fr.wiki.ryzom.com"
     all_pages_url = f"{base_url}/wiki/Sp%C3%A9cial:Toutes_les_pages"
@@ -406,17 +411,15 @@ if __name__ == "__main__":
     all_links = get_all_links_from_pagination(base_url, all_pages_url)
     print(f"{len(all_links)} pages found.")
 
-    '''for idx, url in enumerate(all_links):
-        if idx > 3:
-            break
+    for idx, url in enumerate(all_links):
         print(f"[{idx + 1}/{len(all_links)}] Extraction of {url}...")
         try:
             title = url.split("/wiki/")[-1]
             file_name = sanitize_filename(title) + ".txt"
             content = scrape_useful_page_content(url)
             save_data_to_file(content, folder_name, file_name)
-            time.sleep(1)
+            time.sleep(0.25)
         except Exception as e:
             error_message = f"Error on {url}: {e}"
             print(error_message)
-            log_error(error_message, error_log_file)'''
+            log_error(error_message, error_log_file)
