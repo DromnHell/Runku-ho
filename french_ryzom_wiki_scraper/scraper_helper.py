@@ -17,6 +17,10 @@ def get_custom_text(element, ambre_table = False)  -> str:
     inline_tags = {"b", "i", "strong", "em", "u"}
     excluded_tags = {"small"}
 
+    # Skip excluded tags
+    if element.name in excluded_tags:
+        return ""
+
     text_parts = []
 
     element_text = element.get_text(strip=True)
@@ -27,56 +31,61 @@ def get_custom_text(element, ambre_table = False)  -> str:
 
     # Collect all links in the current element
     link_texts = []
-    for child in element.find_all("a", recursive=True):
-        link_text = child.get_text(strip=True)
-        if link_text:
-            link_texts.append(link_text)
 
-    total_link_text_len = sum(len(link) for link in link_texts)
+    if(isinstance(element, NavigableString)):
+        text_parts.append(element.strip())
 
-    # Determine if the line/cell is mostly composed of links (>= 50%)
-    add_link_label = (element.name in {"li", "dd", "th", "td"}
-                      and total_link_text_len / total_text_len >= 0.5)
+    else:
+        for child in element.find_all("a", recursive=True):
+            link_text = child.get_text(strip=True)
+            if link_text:
+                link_texts.append(link_text)
 
-    # Process the children of the element
-    for child in element.children:
+        total_link_text_len = sum(len(link) for link in link_texts)
 
-        # Skip excluded tags
-        if child.name in excluded_tags:
-            continue
+        # Determine if the line/cell is mostly composed of links (>= 50%)
+        add_link_label = (element.name in {"li", "dd", "th", "td"}
+                          and total_link_text_len / total_text_len >= 0.5)
 
-        # Skip excluded tags
-        if child.name == "br":
-            text_parts.append("\n")
-            continue
+        # Process the children of the element
+        for child in element.children:
 
-        # Add the text content directly, stripping unnecessary spaces.
-        if isinstance(child, NavigableString):
-            text_parts.append(child.strip())
+            # Skip excluded tags
+            if child.name in excluded_tags:
+                continue
 
-        # Inline tags: add their content, ensuring spaces before and after.
-        elif child.name in inline_tags:
-            inline_text = get_custom_text(child)
-            if text_parts and not text_parts[-1].endswith(" "):
+            # Skip excluded tags
+            if child.name == "br":
+                text_parts.append("\n")
+                continue
+
+            # Add the text content directly, stripping unnecessary spaces.
+            if isinstance(child, NavigableString):
+                text_parts.append(child.strip())
+
+            # Inline tags: add their content, ensuring spaces before and after.
+            elif child.name in inline_tags:
+                inline_text = get_custom_text(child)
+                if text_parts and not text_parts[-1].endswith(" "):
+                    text_parts.append(" ")
+                text_parts.append(inline_text)
                 text_parts.append(" ")
-            text_parts.append(inline_text)
-            text_parts.append(" ")
 
-        # Non-inline tags should add separators.
-        else:
-            if text_parts and text_parts[-1] != separator:
-                text_parts.append(separator)
-
-            # If the child is a link (<a>) and the parent line/cell is mostly links, prepend the label
-            if child.name == "a" and add_link_label:
-                link_text = get_custom_text(child)
-                if link_text:
-                    labeled_link = link_text if ambre_table else  f"[→ {link_text}]"
-                    text_parts.append(labeled_link)
+            # Non-inline tags should add separators.
             else:
-                text_parts.append(get_custom_text(child))
+                if text_parts and text_parts[-1] != separator:
+                    text_parts.append(separator)
 
-            text_parts.append(separator)
+                # If the child is a link (<a>) and the parent line/cell is mostly links, prepend the label
+                if child.name == "a" and add_link_label:
+                    link_text = get_custom_text(child)
+                    if link_text:
+                        labeled_link = link_text if ambre_table else  f"[→ {link_text}]"
+                        text_parts.append(labeled_link)
+                else:
+                    text_parts.append(get_custom_text(child))
+
+                text_parts.append(separator)
 
     # Removing consecutive spaces.
     result = "".join(text_parts).strip(separator)

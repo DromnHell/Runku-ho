@@ -92,7 +92,7 @@ OTHER_KEYS_STYLE = ['border-radius: 1em',
                                 'margin: 0em']
 
 IGNORED_DIV_RULES = {
-    "classes": ["subpagelist"] + STANDARD_IGNORED_CLASSES,
+    "classes": ["subpagelist", "gallerytext"] + STANDARD_IGNORED_CLASSES,
     "ids": ["tradbox","toc"],
     "summaries": [],
     "styles": [CONTENT_PORTAL_BOX_KEYS_STYLE,
@@ -143,8 +143,8 @@ IGNORED_TABLE_RULES = {
 }
 
 IGNORED_LIST_RULES = {
-    "classes": [] + STANDARD_IGNORED_CLASSES,
-    "ids": [],
+    "classes": ["gallery"] + STANDARD_IGNORED_CLASSES,
+    "ids": ["cite_note-1"],
     "summaries": [],
     "styles": []
 }
@@ -158,7 +158,7 @@ URL_TO_NOT_SCRAP = [
     "https://fr.wiki.ryzom.com/wiki/Aen_la_Lame_du_D%C3%A9sert/HRP",
     "https://fr.wiki.ryzom.com/wiki/Guide_de_r%C3%A9daction/Aide_officielle_Wiki",
     "https://fr.wiki.ryzom.com/wiki/Ambres_d%27Animations",
-    "https://fr.wiki.ryzom.com/wiki/Aniera_Ayie/",
+    "https://fr.wiki.ryzom.com/wiki/Aniera_Ayie",
     "https://fr.wiki.ryzom.com/wiki/Anlor_Winn",
     "https://fr.wiki.ryzom.com/wiki/Animal_inattendu",
     "https://fr.wiki.ryzom.com/wiki/Anniversaire_15_ans",
@@ -272,6 +272,7 @@ URL_TO_NOT_SCRAP = [
     "https://fr.wiki.ryzom.com/wiki/Gazette_du_d%C3%A9sert/",
     "https://fr.wiki.ryzom.com/wiki/Gestion_lumi%C3%A8re_sur_fauna",
     "https://fr.wiki.ryzom.com/wiki/Gestion_lumi%C3%A8re_sur_flora",
+    "https://fr.wiki.ryzom.com/wiki/Gestion_mektoub",
     "https://fr.wiki.ryzom.com/wiki/Gnostes%E2%88%B4Tenants/HRP",
     "https://fr.wiki.ryzom.com/wiki/Gubani_tr%C3%A8s_fortun%C3%A9",
     "https://fr.wiki.ryzom.com/wiki/Guide_Easy_Dapper",
@@ -297,6 +298,7 @@ URL_TO_NOT_SCRAP = [
     "https://fr.wiki.ryzom.com/wiki/Jeux_d%27Atys_2629",
     "https://fr.wiki.ryzom.com/wiki/Journal_de_Ciboulette_",
     "https://fr.wiki.ryzom.com/wiki/Justice_zora%C3%AF/HRP",
+    "https://fr.wiki.ryzom.com/wiki/Kami_blast",
     "https://fr.wiki.ryzom.com/wiki/KK",
     "https://fr.wiki.ryzom.com/wiki/K_Start_Tst",
     "https://fr.wiki.ryzom.com/wiki/Kitins_des_profondeurs/HRP",
@@ -304,6 +306,9 @@ URL_TO_NOT_SCRAP = [
     "https://fr.wiki.ryzom.com/wiki/L%27%C3%A9quipe_d%27animation",
     "https://fr.wiki.ryzom.com/wiki/LPOLTF_Dossier",
     "https://fr.wiki.ryzom.com/wiki/L_",
+    "https://fr.wiki.ryzom.com/wiki/L%27appel_de_la_S%C3%A8ve/Seconde_Partie",
+    "https://fr.wiki.ryzom.com/wiki/Le_Cercle_Noir_-_premi%C3%A8re_partie",
+    "https://fr.wiki.ryzom.com/wiki/Le_Cercle_Noir_-_seconde_partie",
     "https://fr.wiki.ryzom.com/wiki/La_chute_de_Pyr",
     "https://fr.wiki.ryzom.com/wiki/La_Lore",
     "https://fr.wiki.ryzom.com/wiki/La_Nouvelle_Feuille_d%27Atys",
@@ -364,6 +369,7 @@ URL_TO_NOT_SCRAP = [
     "https://fr.wiki.ryzom.com/wiki/NewForge",
     "https://fr.wiki.ryzom.com/wiki/New_Zone",
     "https://fr.wiki.ryzom.com/wiki/Nexus_Mineur/Le_secret_des_gibba%C3%AF_du_Nexus/",
+    "https://fr.wiki.ryzom.com/wiki/Nombre_de_Polygones",
     "https://fr.wiki.ryzom.com/wiki/Nomm%C3%A9s_et_Rois",
     "https://fr.wiki.ryzom.com/wiki/Nomm%C3%A9s_et_Rois/Liste_par_r%C3%A9gion",
     "https://fr.wiki.ryzom.com/wiki/Nommer_ses_Templates",
@@ -397,7 +403,7 @@ URL_TO_NOT_SCRAP = [
     "https://fr.wiki.ryzom.com/wiki/Premier_Atyso%C3%ABl_dans_les_Nouvelles_Terres",
     "https://fr.wiki.ryzom.com/wiki/Projet_BugsHunter",
     "https://fr.wiki.ryzom.com/wiki/Projet_Id%C3%A9es",
-    "https://fr.wiki.ryzom.com/wiki/Projet_d'Event_",
+    "https://fr.wiki.ryzom.com/wiki/Projet_d'Event",
     "https://fr.wiki.ryzom.com/wiki/Proto_2525",
     "https://fr.wiki.ryzom.com/wiki/Prototype",
     "https://fr.wiki.ryzom.com/wiki/Pr%C3%A9sentation_des_Webapps",

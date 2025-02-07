@@ -9,7 +9,7 @@ import copy
 import pandas as pd
 from io import StringIO
 import urllib.parse
-
+from typing import Optional, Dict
 from scraper_helper import *
 from scraper_rules import URL_TO_NOT_SCRAP, EXTRA_URL_TO_SCRAP
 
@@ -38,8 +38,8 @@ def clean_text_before_extraction(description: str) -> str:
     # Removing [x] characters (e.g. [1], [2]...).
     text = re.sub(r'\[\d+]', '', description)
 
-    # Removing consecutive special characters (non-alphanumeric) except the point.
-    text = re.sub(r'([^\w\s.])\1+', r'\1', text)
+    # Removing consecutive special characters (non-alphanumeric) except the point and the #.
+    text = re.sub(r'([^\w\s.#])\1+', r'\1', text)
 
     # Adding spaces before certain punctuations (French style).
     text = re.sub(r'([!?;:])', r' \1', text)
@@ -53,9 +53,77 @@ def clean_text_before_extraction(description: str) -> str:
     # Removing extra symbols.
     text = regex.sub(r'[\p{So}ᐉ⓵⓶⓷←ᐖᐄᐛ]', '', text)
 
+    # Replacing excessive newlines, keeping at most two consecutive ones
+    text = re.sub(r'\n{3,}', '\n\n', text)
+
+    # Removing the pattern "-–—o§O§o—–-"
+    text = re.sub(r'-–—o§O§o—–-', '', text)
+
+    # Removing the pattern "一 ⧼⧽ 一"
+    text = re.sub(r'一 ⧼⧽ 一', '', text)
+
     text = text.strip()
 
     return text
+
+
+def save_data_to_file(data: Optional[Dict[str, object]], folder_name, file_name):
+    """
+    Saves data to a text file in a specific folder.
+
+    :param data: The data to be saved.
+    :param folder_name: The folder in which to save the files.
+    :param file_name: The file name.
+
+    :return: None
+    """
+    if data is None:
+        return
+
+    title = data.get('title', "")
+    text_main_content = data.get('text_main_content', "")
+    ambre_table = data.get('ambre_table', {})
+
+    if not text_main_content.strip() and not ambre_table:
+        return
+
+    os.makedirs(folder_name, exist_ok=True)
+    file_path = os.path.join(folder_name, file_name)
+
+    with open(file_path, "w", encoding="utf-8") as file:
+        file.write(clean_text_before_extraction(f"# {title}"))
+        file.write("\n\n")
+
+        if isinstance(text_main_content, str) and text_main_content.strip():
+            cleaned_text = clean_text_before_extraction(text_main_content)
+            cleaned_text = remove_last_title_if_needed(cleaned_text)  # Suppression du dernier titre si nécessaire
+            file.write(cleaned_text)
+
+        if isinstance(ambre_table, dict) and ambre_table:
+            file.write("\n\n[Tableau résumé]\n")
+            for key, value in ambre_table.items():
+                if value == "":
+                    file.write(f"{clean_text_before_extraction(key)}\n")
+                else:
+                    file.write(f"{clean_text_before_extraction(key)}: {clean_text_before_extraction(value)}\n")
+
+def remove_last_title_if_needed(text: str) -> str:
+    """
+    Removes the last line of the text if it is a title (starting with #),
+    ignoring empty lines at the end.
+
+    :param text: The input text.
+    :return: The cleaned text without the last title if applicable.
+    """
+    lines = text.split("\n")
+
+    while lines and not lines[-1].strip():
+        lines.pop()
+
+    if lines and lines[-1].strip().startswith("#"):
+        lines.pop()
+
+    return "\n".join(lines)
 
 def save_data_to_file(data: Optional[Dict[str, object]], folder_name, file_name):
     """
@@ -83,13 +151,16 @@ def save_data_to_file(data: Optional[Dict[str, object]], folder_name, file_name)
 
     with open(file_path, "w", encoding="utf-8") as file:
 
-        file.write(clean_text_before_extraction(title) + "\n\n\n")
+        file.write(clean_text_before_extraction(f"# {title}"))
+        file.write(f"\n\n")
 
         if isinstance(text_main_content, str) and text_main_content.strip():
-            file.write(clean_text_before_extraction(text_main_content) + "\n\n")
+            cleaned_text = clean_text_before_extraction(text_main_content)
+            cleaned_text = remove_last_title_if_needed(cleaned_text)
+            file.write(cleaned_text)
 
         if isinstance(ambre_table, dict) and ambre_table:
-            file.write("[Tableau résumé]\n")
+            file.write("\n\n[Tableau résumé]\n")
             for key, value in ambre_table.items():
                 if(value == ""):
                     file.write(f"{clean_text_before_extraction(key)}\n")

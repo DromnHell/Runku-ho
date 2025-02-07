@@ -124,42 +124,54 @@ def process_headers(child, lines, children, current_index):
     :param children: The list of all children elements.
     :param current_index: The index of the current header in the children list.
 
-    :return: True.
+    :return: True if the header is processed, None otherwise.
     """
     header_level = int(child.name[1])
     header_text = get_custom_text(child)
 
-    # Look ahead to check if there's meaningful content before the next header
-    for next_child in children[current_index + 1:]:
+    # Check if there's meaningful content before encountering another header of the same or higher level
+    if not has_meaningful_content(children, current_index + 1, header_level):
+        return True
 
-        next_line_is_header = False
+    # Check if the next element is a header to determine newline behavior
+    next_child = children[current_index + 1] if current_index + 1 < len(children) else None
+    next_line_is_header = hasattr(next_child, 'name') and next_child.name in {"h1", "h2", "h3", "h4", "h5", "h6"} if next_child else False
 
-        # Skip whitespace or empty strings
-        if (isinstance(next_child, NavigableString)
-                or (isinstance(next_child, NavigableString) and not next_child.strip())):
-            continue
+    newline = "" if next_line_is_header else "\n"
 
-        # If the next element is another header of the same level or higher, skip this header
-        if hasattr(next_child, 'name') and next_child.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
-            next_level = int(next_child.name[1])
-            if next_level <= header_level:
-                return True
-            else:
-                next_line_is_header = True
+    lines.append(f"\n{'#' * header_level} {header_text}{newline}")
 
-        # Check if the next element is a table with a specific summary
-        if next_child.name == "table" and next_child.has_attr("summary"):
-            table_summary = next_child.get("summary", "")
-            if table_summary in GENEALOGY_SUMMARIES:
-                return
+    return True
 
-        # If meaningful content is found, add the header and return
+def has_meaningful_content(children, start_index, current_header_level):
+    """
+    Checks if there's meaningful content before encountering another header of the same or higher level
+    or a genealogy table.
+
+    :param children: The list of all child elements.
+    :param start_index: The index to start searching from.
+    :param current_header_level: The level of the current header being processed.
+
+    :return: True if meaningful content is found, False otherwise.
+    """
+    for next_child in children[start_index:]:
+        if isinstance(next_child, NavigableString) and not next_child.strip():
+            continue  # Skip empty strings
+
+        if hasattr(next_child, 'name'):
+            # Another header of the same or higher level appears
+            if (next_child.name in {"h1", "h2", "h3", "h4", "h5", "h6"}
+                    and int(next_child.name[1]) <= current_header_level):
+                return False
+
+            # A genealogy table appears
+            if next_child.name == "table" and next_child.get("summary", "") in GENEALOGY_SUMMARIES:
+                return False
+
         if get_custom_text(next_child).strip():
-            if(header_level == 2 and not next_line_is_header):
-                lines.append(f"\n{header_text}\n")
-            else:
-                lines.append(f"\n{header_text}")
             return True
+
+    return False
 
 def process_paragraph(child, lines) -> bool:
     """
@@ -218,9 +230,9 @@ def process_table(child, lines) -> bool:
     # Optimize the table display for LLM readability
     table_as_string = df.to_string(
         #max_colwidth=30,    # Limit the width of each column
-        line_width=80,      # Set the total width of the table
-        index=False,        # Hide the index if not necessary
-        justify="left"     # Align columns to the left for consistency
+        line_width = 80,      # Set the total width of the table
+        index = False,        # Hide the index if not necessary
+        justify = "left"     # Align columns to the left for consistency
     )
 
     # Add processed table to the lines
@@ -238,9 +250,9 @@ def process_div_without_nested_elements(child, lines) -> bool:
 
     :return: True if the function is process. False otherwise.
     """
-    if not child.find("div", recursive=True)\
+    if (not child.find("div", recursive=True)\
             and not child.find("span", recursive=True)\
-            and not child.find("p", recursive=True):
+            and not child.find("p", recursive=True)):
         text = get_custom_text(child)
         if text:
             lines.append(text)
@@ -261,9 +273,10 @@ def extract_ordered_content(element):
         comment.extract()
 
     # Ignore specific element.
-    if((element.name == "div" and is_ignored_element(element, IGNORED_DIV_RULES))
+    if((element.name == "small"
+            or element.name == "div" and is_ignored_element(element, IGNORED_DIV_RULES))
             or (element.name == "table" and is_ignored_element(element, IGNORED_TABLE_RULES))
-            or (element.name == "ul" and is_ignored_element(element, IGNORED_LIST_RULES))):
+            or ((element.name == "ul" or element.name == "li") and is_ignored_element(element, IGNORED_LIST_RULES))):
         return lines
 
     filtered_children = [
@@ -271,78 +284,50 @@ def extract_ordered_content(element):
         if not (isinstance(child, NavigableString) and not child.strip())
     ]
 
-    i = 0
+    handlers = {
+        "div": process_div_without_nested_elements,
+        "table": process_table,
+        "span": process_span,
+        "p": process_paragraph,
+        "ul": process_list,
+        "ol": process_list,
+        "dl": process_description_list,
+        "img": process_images
+    }
 
+    i = 0
     # Sequentially process the children of the element.
     while i < len(filtered_children):
         child = filtered_children[i]
 
-        # 1) If the child is plain text (NavigableString), skip it.
         if isinstance(child, NavigableString):
+            lines.append(child.strip())
             i += 1
             continue
 
-        # 2) If the child is an HTML tag:
         if child and hasattr(child, "name"):
 
-            # a) Dot not add text of elements to ignore.
-            if ((child.name == "div" and is_ignored_element(child, IGNORED_DIV_RULES))
+            # Dot not add text of HTML elements to ignore.
+            if ((element.name == "small"
+                    or child.name == "div" and is_ignored_element(child, IGNORED_DIV_RULES))
                     or (child.name == "table" and is_ignored_element(child, IGNORED_TABLE_RULES))
-                    or (child.name == "ul" and is_ignored_element(child, IGNORED_LIST_RULES))):
+                    or ((element.name == "ul" or element.name == "li") and is_ignored_element(child, IGNORED_LIST_RULES))):
                 i += 1
                 continue
 
-            # b) Process <div> elements.
-            if child.name == "div":
-                if process_div_without_nested_elements(child, lines):
-                    i += 1
-                    continue
+            # Process headers.
+            if (child.name in {"h1", "h2", "h3", "h4", "h5", "h6"}
+                    and process_headers(child, lines, filtered_children, i)):
+                i += 1
+                continue
 
-            # c) Process <table> elements.
-            if child.name == "table":
-                if process_table(child, lines):
-                    i += 1
-                    continue
+            # Process other html element in the handler.
+            if child.name in handlers and handlers[child.name](child, lines):
+                i += 1
+                continue
 
-            # d) Process <span> elements.
-            if child.name == "span":
-                if process_span(child, lines):
-                    i += 1
-                    continue
-
-            # e) Process <p> elements.
-            if child.name == "p":
-                if process_paragraph(child, lines):
-                    i += 1
-                    continue
-
-            # f) Process headers elements (<hx>).
-            if child.name in ["h1", "h2", "h3", "h4", "h5", "h6"]:
-                if process_headers(child, lines, filtered_children, i):
-                    i += 1
-                    continue
-
-            # g) Process <ul> and <ol> lists.
-            if child.name in ["ul", "ol"]:
-                if process_list(child, lines):
-                    i += 1
-                    continue
-
-            # h) Process <dl> lists.
-            if child.name == "dl":
-                if process_description_list(child, lines):
-                    i += 1
-                    continue
-
-            # h) Process <img>.
-            if child.name == "img":
-                if process_images(child, lines):
-                    i += 1
-                    continue
-
-            # j) If the child is not specifically handled, recursively explore its content.
-            child_lines = extract_ordered_content(child)
-            lines.extend(child_lines)
+            # Recursively process other elements
+            lines.extend(extract_ordered_content(child))
 
         i += 1
 
@@ -392,19 +377,18 @@ def scrap_useful_page_content(url: str) -> Optional[Dict[str, object]]:
 
 if __name__ == "__main__":
 
-    '''base_url = "https://fr.wiki.ryzom.com/wiki/Lexique_des_termes_RP"
+    '''base_url = "https://fr.wiki.ryzom.com/wiki/Le_Cercle_Noir"
 
     if is_ignored_url(base_url, URL_TO_NOT_SCRAP):
         print(f"URL ignored : {base_url}")
     else:
-        folder_name = "french_ryzom_wiki_pages"
+        folder_name = "../data"
         data = scrap_useful_page_content(base_url)
         save_data_to_file(data, folder_name,"test.txt")'''
 
-
     base_url = "https://fr.wiki.ryzom.com"
     all_pages_url = f"{base_url}/wiki/Sp%C3%A9cial:Toutes_les_pages"
-    folder_name = "../french_ryzom_wiki_pages"
+    folder_name = "../data/french_ryzom_wiki_pages"
     error_log_file = "errors.log"
 
     print("Retrieve links..")
