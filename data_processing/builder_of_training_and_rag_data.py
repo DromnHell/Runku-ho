@@ -75,13 +75,13 @@ if __name__ == "__main__":
     file_path = os.path.join(base_folder_name, file)
     extract_data(file_path, rag_data_folder_name, training_data_folder_name)'''
 
-    base_folder_name = "../data/french_ryzom_wiki_pages"
-    rag_data_folder_name = "../data/rag"
-    training_data_folder_name = "../data/training"
+    base_folder_name = "../data/data_resulting_from_scraping/scraping_result"
+    rag_data_folder_name = "../data/data_for_rag"
+    training_data_folder_name = "../data/data_to_be_tokenized"
 
     # Ensure output directories exist
-    os.makedirs(rag_data_folder_name, exist_ok=True)
-    os.makedirs(training_data_folder_name, exist_ok=True)
+    os.makedirs(rag_data_folder_name, exist_ok = True)
+    os.makedirs(training_data_folder_name, exist_ok = True)
 
     files_nb = len([f for f in os.listdir(base_folder_name) if os.path.isfile(os.path.join(base_folder_name, f))])
     i = 0
