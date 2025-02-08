@@ -89,7 +89,7 @@ if __name__ == "__main__":
     # Process all files in the source folder
     for file in os.listdir(base_folder_name):
 
-        print(f"[{i + 1}/{files_nb}] Extraction of {file}...")
+        print(f"[{i + 1}/{files_nb}] Building training and rag data of {file}...")
 
         file_path = os.path.join(base_folder_name, file)
 

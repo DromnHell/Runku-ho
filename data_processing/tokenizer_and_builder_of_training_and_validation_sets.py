@@ -117,15 +117,22 @@ def build_corpus(data_dir, nlp_model , tokenizer, max_length, overlap_ratio):
     :return: A list of processed text chunks.
     """
     all_chunks = []
-    txt_files = glob.glob(os.path.join(data_dir, "*.txt"))
+    files_to_tokenize = glob.glob(os.path.join(data_dir, "*.txt"))
+    files_nb = len(files_to_tokenize)
 
-    for fpath in txt_files:
-        with open(fpath, "r", encoding="utf-8") as f:
+    i = 0
+
+    for file_path in files_to_tokenize:
+        file_name = os.path.basename(file_path)
+        print(f"[{i + 1}/{files_nb}] Chunking and tokenizing {file_name}...")
+        with open(file_path, "r", encoding="utf-8") as f:
             text = f.read().strip()
 
             file_chunks = chunk_text_with_overlap(text, nlp_model , tokenizer, max_length, overlap_ratio)
 
             all_chunks.extend(file_chunks)
+
+        i += 1
 
     return all_chunks
 
