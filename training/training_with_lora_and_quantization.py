@@ -23,11 +23,11 @@ def load_tokenized_data(data_path):
     return train_dataset, val_dataset
 
 
-def load_model(model_name):
+def load_model(base_model_path):
     """
     Loads the base LLaMA-2 model with 8-bit quantization and LoRA configuration.
     """
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(base_model_path)
 
     # Set a padding token (since LLaMA-2 does not have one by default)
     if tokenizer.pad_token is None:
@@ -37,7 +37,7 @@ def load_model(model_name):
     bnb_config = BitsAndBytesConfig(load_in_8bit_fp32_cpu_offload = True)
 
     base_model = AutoModelForCausalLM.from_pretrained(
-        model_name,
+        base_model_path,
         quantization_config = bnb_config,
         device_map = "auto"  # Allows CPU offloading for out-of-memory cases.
     )
@@ -51,8 +51,8 @@ def load_model(model_name):
         task_type = TaskType.CAUSAL_LM  # Auto-regressive task.
     )
 
-    model = get_peft_model(base_model, lora_config)
-    return tokenizer, model
+    base_model_with_lora = get_peft_model(base_model, lora_config)
+    return tokenizer, base_model_with_lora
 
 
 def get_training_args():
@@ -74,20 +74,19 @@ def get_training_args():
     )
 
 
-def train_lora(model, tokenizer, train_dataset, val_dataset):
+def train_lora(base_model_with_lora, tokenizer, train_dataset, val_dataset):
     """
     Runs the fine-tuning process using LoRA.
     """
-    # Use DataCollatorForLanguageModeling(mlm = False) for causal model.
-    # “mlm” means "masked language modeling", which is used for bidirectional models like BERT,
-    # but not for causal models like ours. We don't want the collator applies random masking to
-    # certain tokens in the input text, because we want the model to predict the next token.
+    # Use DataCollatorForLanguageModeling(mlm = False) for causal model. “mlm” means "masked language modeling",
+    # which is used for bidirectional models like BERT, but not for causal models like ours. We don't want the collator
+    # applies random masking to certain tokens in the input text, because we want the model to predict the next token.
     data_collator = DataCollatorForLanguageModeling(tokenizer = tokenizer, mlm = False)
 
     training_args = get_training_args()
 
     trainer = Trainer(
-        model = model,
+        model = base_model_with_lora,
         args = training_args,
         train_dataset = train_dataset,
         eval_dataset = val_dataset,
@@ -103,13 +102,13 @@ if __name__ == "__main__":
 
     os.environ["WANDB_DISABLED"] = "true"
 
-    model_name = "meta-llama/Llama-2-7b-hf"
+    base_model_path = "meta-llama/Llama-2-7b-hf"
 
     print("Loading tokenized dataset...")
     train_dataset, val_dataset = load_tokenized_data("../data/tokenized_data")
 
     print("Loading model and tokenizer...")
-    tokenizer, model = load_model(model_name)
+    tokenizer, base_model_with_lora = load_model(base_model_path)
 
     print("Starting LoRA fine-tuning...")
-    train_lora(model, tokenizer, train_dataset, val_dataset)
+    train_lora(base_model_with_lora, tokenizer, train_dataset, val_dataset)
