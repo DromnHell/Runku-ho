@@ -4,6 +4,7 @@ import random
 import spacy
 from transformers import AutoTokenizer
 from datasets import Dataset, DatasetDict
+import json
 
 
 def segment_text_into_sentences(text, nlp_model ):
@@ -104,11 +105,11 @@ def chunk_text_with_overlap(text, nlp_model , tokenizer, max_length, overlap_rat
     chunks = chunk_by_sentences(sentences, tokenizer, max_length, overlap_ratio)
     return chunks
 
-def build_corpus(data_dir, nlp_model , tokenizer, max_length, overlap_ratio):
+def build_corpus(data_dir, nlp_model, tokenizer, max_length, overlap_ratio):
     """
-    Builds a text corpus by processing and chunking all .txt files in a given directory.
+    Builds a text corpus by processing and chunking all .txt and .json files in a given directory.
 
-    :param data_dir: Path to the directory containing text files.
+    :param data_dir: Path to the directory containing text files and JSON datasets.
     :param nlp_model: The NLP model used for sentence segmentation.
     :param tokenizer: The tokenizer used to encode and decode text chunks.
     :param max_length: The maximum length of each chunk.
@@ -117,21 +118,36 @@ def build_corpus(data_dir, nlp_model , tokenizer, max_length, overlap_ratio):
     :return: A list of processed text chunks.
     """
     all_chunks = []
-    files_to_tokenize = glob.glob(os.path.join(data_dir, "*.txt"))
-    files_nb = len(files_to_tokenize)
+    files_to_process = glob.glob(os.path.join(data_dir, "*"))
+    files_nb = len(files_to_process)
 
     i = 0
 
-    for file_path in files_to_tokenize:
+    for file_path in files_to_process:
         file_name = os.path.basename(file_path)
-        print(f"[{i + 1}/{files_nb}] Chunking and tokenizing {file_name}...")
-        with open(file_path, "r", encoding="utf-8") as f:
-            text = f.read().strip()
+        print(f"[{i + 1}/{files_nb}] Processing {file_name}...")
 
-            file_chunks = chunk_text_with_overlap(text, nlp_model , tokenizer, max_length, overlap_ratio)
+        if file_path.endswith(".txt"):
+            with open(file_path, "r", encoding = "utf-8") as f:
+                text = f.read().strip()
+                file_chunks = chunk_text_with_overlap(text, nlp_model, tokenizer, max_length, overlap_ratio)
+                all_chunks.extend(file_chunks)
 
-            all_chunks.extend(file_chunks)
+        elif file_path.endswith(".json"):
+            with open(file_path, "r", encoding = "utf-8") as f:
+                data = json.load(f)
 
+                if "Question" in data[0]:
+                    for entry in data:
+                        text = f"Question : {entry['Question']}\nRéponse : {entry['Réponse']}"
+                        file_chunks = chunk_text_with_overlap(text, nlp_model, tokenizer, max_length, overlap_ratio)
+                        all_chunks.extend(file_chunks)
+
+                elif "Instruction" in data[0]:
+                    for entry in data:
+                        text = f"Instruction : {entry['Instruction']}\n{entry['Prompt']}\n{entry['Texte']}"
+                        file_chunks = chunk_text_with_overlap(text, nlp_model, tokenizer, max_length, overlap_ratio)
+                        all_chunks.extend(file_chunks)
         i += 1
 
     return all_chunks
@@ -139,13 +155,13 @@ def build_corpus(data_dir, nlp_model , tokenizer, max_length, overlap_ratio):
 
 if __name__ == "__main__":
 
-    data_to_be_tokenized = "../data/data_to_be_tokenized"
-    model_name = "meta-llama/Llama-2-7b-hf"
+    data_to_be_tokenized = "../data/raw_data/raw_data_for_training"
+    model_name = "meta-llama/Llama-2-7b-chat-hf"
     chunk_max_length = 512
     chunk_overlap_ratio = 0.1
     train_ratio = 0.95
 
-    nlp_model  = spacy.load("fr_core_news_sm")
+    nlp_model  = spacy.load("fr_core_news_lg")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     # Transform the text corpus in tokens chunks
@@ -168,6 +184,6 @@ if __name__ == "__main__":
         "validation": val_dataset
     })
 
-    dataset.save_to_disk("../data/tokenized_data")
+    dataset.save_to_disk("../data/tokenized_data/tokenized_training_data")
 
 

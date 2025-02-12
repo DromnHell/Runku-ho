@@ -388,7 +388,7 @@ if __name__ == "__main__":
 
     base_url = "https://fr.wiki.ryzom.com"
     all_pages_url = f"{base_url}/wiki/Sp%C3%A9cial:Toutes_les_pages"
-    folder_name = "../data/data_resulting_from_scraping/scraping_result"
+    folder_name = "../data/raw_data/raw_data_from_scraping/scraping_result"
     error_log_file = "errors.log"
 
     print("Retrieve links..")

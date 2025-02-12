@@ -60,7 +60,7 @@ def get_training_args():
     Defines training hyperparameters optimized for LoRA fine-tuning on an 8GB VRAM GPU.
     """
     return TrainingArguments(
-        output_dir = "../data/lora_output",  # Directory for saving checkpoints.
+        output_dir ="../data/models/lora_output",  # Directory for saving checkpoints.
         overwrite_output_dir = True,  # Overwrite existing files if they exist.
         num_train_epochs = 3,  # 3 epochs are enough for LoRA fine-tuning.
         per_device_train_batch_size = 1,  # Small batch size (to avoid OOM errors).
@@ -102,10 +102,10 @@ if __name__ == "__main__":
 
     os.environ["WANDB_DISABLED"] = "true"
 
-    base_model_path = "meta-llama/Llama-2-7b-hf"
+    base_model_path = "meta-llama/Llama-2-7b-chat-hf"
 
     print("Loading tokenized dataset...")
-    train_dataset, val_dataset = load_tokenized_data("../data/tokenized_data")
+    train_dataset, val_dataset = load_tokenized_data("../data/tokenized_data/tokenized_training_data")
 
     print("Loading model and tokenizer...")
     tokenizer, base_model_with_lora = load_model(base_model_path)

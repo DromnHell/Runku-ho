@@ -30,8 +30,8 @@ def merge_lora_and_save(base_model_path, lora_adapters_path, fused_model_path):
 
 if __name__ == "__main__":
 
-    base_model_path = "meta-llama/Llama-2-7b-hf"
-    lora_adapters_path = "../data/lora_output"
-    fused_model_path = "../data/lora_fused"
+    base_model_path = "meta-llama/Llama-2-7b-chat-hf"
+    lora_adapters_path = "../data/models/lora_output"
+    fused_model_path = "../data/models/Runku-ho_model"
 
     merge_lora_and_save(base_model_path, lora_adapters_path, fused_model_path)
