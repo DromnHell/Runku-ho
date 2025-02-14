@@ -1,7 +1,7 @@
 from operator import truediv
 import argparse
 from scraper_helper import *
-from files_utiles import *
+from scraper_files_utiles import *
 from scraper_rules import *
 
 
@@ -113,36 +113,6 @@ def process_list(child, lines) -> bool:
             lines.append(f"- {li_text}")
     return True
 
-def process_headers(child, lines, children, current_index):
-    """
-    Processes header elements (<h1>, <h2>, <h3>, etc.).
-    Skips headers that are immediately followed by another header of the same level or higher without meaningful content.
-    Skips headers that are immediately followed by a "genealogy table".
-
-    :param child: The current header element being processed.
-    :param lines: The list to store processed text.
-    :param children: The list of all children elements.
-    :param current_index: The index of the current header in the children list.
-
-    :return: True if the header is processed, None otherwise.
-    """
-    header_level = int(child.name[1])
-    header_text = get_custom_text(child)
-
-    # Check if there's meaningful content before encountering another header of the same or higher level
-    if not has_meaningful_content(children, current_index + 1, header_level):
-        return True
-
-    # Check if the next element is a header to determine newline behavior
-    next_child = children[current_index + 1] if current_index + 1 < len(children) else None
-    next_line_is_header = hasattr(next_child, 'name') and next_child.name in {"h1", "h2", "h3", "h4", "h5", "h6"} if next_child else False
-
-    newline = "" if next_line_is_header else "\n"
-
-    lines.append(f"\n{'#' * header_level} {header_text}{newline}")
-
-    return True
-
 def has_meaningful_content(children, start_index, current_header_level):
     """
     Checks if there's meaningful content before encountering another header of the same or higher level
@@ -172,6 +142,36 @@ def has_meaningful_content(children, start_index, current_header_level):
             return True
 
     return False
+
+def process_headers(child, lines, children, current_index):
+    """
+    Processes header elements (<h1>, <h2>, <h3>, etc.).
+    Skips headers that are immediately followed by another header of the same level or higher without meaningful content.
+    Skips headers that are immediately followed by a "genealogy table".
+
+    :param child: The current header element being processed.
+    :param lines: The list to store processed text.
+    :param children: The list of all children elements.
+    :param current_index: The index of the current header in the children list.
+
+    :return: True if the header is processed, None otherwise.
+    """
+    header_level = int(child.name[1])
+    header_text = get_custom_text(child)
+
+    # Check if there's meaningful content before encountering another header of the same or higher level
+    if not has_meaningful_content(children, current_index + 1, header_level):
+        return True
+
+    # Check if the next element is a header to determine newline behavior
+    next_child = children[current_index + 1] if current_index + 1 < len(children) else None
+    next_line_is_header = hasattr(next_child, 'name') and next_child.name in {"h1", "h2", "h3", "h4", "h5", "h6"} if next_child else False
+
+    newline = "" if next_line_is_header else "\n"
+
+    lines.append(f"\n{'#' * header_level} {header_text}{newline}")
+
+    return True
 
 def process_paragraph(child, lines) -> bool:
     """
@@ -377,7 +377,7 @@ def scrap_useful_page_content(url: str) -> Optional[Dict[str, object]]:
 
 if __name__ == "__main__":
 
-    '''base_url = "https://fr.wiki.ryzom.com/wiki/Le_Cercle_Noir"
+    '''base_url = "https://fr.wiki.ryzom.com/wiki/Portail:Zora%C3%AF"
 
     if is_ignored_url(base_url, URL_TO_NOT_SCRAP):
         print(f"URL ignored : {base_url}")
