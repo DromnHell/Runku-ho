@@ -58,7 +58,7 @@ def extract_data(scraped_file_path, raw_data_rag_path):
 if __name__ == "__main__":
 
     scraped_data_path = "../data/raw_data/raw_data_from_scraping/scraping_result"
-    raw_data_rag_path = "../data/raw_data/raw_data_for_the_RAG"
+    raw_data_rag_path = "../data/raw_data/raw_data_for_RAG"
 
     os.makedirs(raw_data_rag_path, exist_ok = True)
 
