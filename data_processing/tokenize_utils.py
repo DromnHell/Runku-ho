@@ -11,7 +11,7 @@ from transformers import AutoTokenizer
 from datasets import Dataset, DatasetDict
 from sentence_transformers import SentenceTransformer
 
-MINIMUM_TEXT_SIZE = 175
+MINIMUM_TEXT_SIZE = 200
 
 def segment_text_into_sentences(text, nlp_model):
     """
@@ -22,7 +22,6 @@ def segment_text_into_sentences(text, nlp_model):
 
     :return: List of tokenized chunks, where each chunk is a list of token IDs.
     """
-    print(len(text.strip()))
     if len(text.strip()) < MINIMUM_TEXT_SIZE:
         return [text]
     try:
@@ -170,7 +169,8 @@ def build_corpus(data_dir, nlp_model, tokenizer, max_length, overlap_ratio, rag_
                         lines.append(f"{field} : {value}")
 
                 if lines:
-                    text = "\n".join(lines)
+                    document_title = file_name.replace("_", " ").replace(".csv", "")
+                    text = f"Fiche descriptive de {document_title} :\n" + "\n".join(lines)
                     file_chunks = chunk_text_with_overlap(
                         text, nlp_model, tokenizer, max_length, overlap_ratio
                     )

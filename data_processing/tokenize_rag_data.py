@@ -3,23 +3,22 @@ from tokenize_utils import *
 def create_vectorstore(chunks, embedding_model_name, chroma_dir):
     """
     Given a list of text chunks, this function:
-    1) Creates embeddings for each chunk using a Sentence-Transformers model.
+    1) Creates embeddings for each chunk using a langage model.
     2) Stores them in a Chroma DB local instance.
 
     :param chunks: A list of text chunks.
-    :param embedding_model_name: A sentence-transformers model name or path.
+    :param embedding_model_name: A langage model name or path.
     :param chroma_dir: Where to store the Chroma index on disk.
     :return: The Chroma collection (you can later query it for retrieval).
     """
-
     client = chromadb.PersistentClient(chroma_dir)
 
     try:
-        client.delete_collection("ryzom_wiki")
+        client.delete_collection("french_ryzom_wiki")
     except:
         pass
 
-    collection = client.get_or_create_collection("ryzom_wiki")
+    collection = client.get_or_create_collection("french_ryzom_wiki")
 
     print(f"Loading the {embedding_model_name} embedding model...")
     embedder = SentenceTransformer(embedding_model_name)
@@ -32,9 +31,8 @@ def create_vectorstore(chunks, embedding_model_name, chroma_dir):
     for idx, (chunk_text, file_name) in enumerate(chunks):
         documents.append(chunk_text)
         ids.append(f"doc_{idx}")
-        # Create an embedding
         embeddings.append(embedder.encode(chunk_text))
-        metadatas.append({"file_name": file_name})
+        metadatas.append({"file_name": file_name.replace("_", " ")})
 
     print("Adding embeddings to Chroma collection...")
     collection.add(
@@ -55,7 +53,7 @@ if __name__  ==  "__main__":
     embedding_model_name = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
     spacy_model_name = "fr_core_news_lg"
 
-    chunk_max_length = 512
+    chunk_max_length = 256
     chunk_overlap_ratio = 0.1
 
     chroma_dir = "../data/tokenized_data/chroma_db_for_RAG"

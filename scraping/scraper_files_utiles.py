@@ -193,7 +193,7 @@ def get_all_links_from_pagination(base_url, all_pages_url):
         if next_page:
             next_url = next_page.get("href")
             current_url = base_url + next_url
-            time.sleep(0.25)
+            time.sleep(0.1)
         else:
             current_url = None
 

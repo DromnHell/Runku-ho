@@ -377,16 +377,16 @@ def scrap_useful_page_content(url: str) -> Optional[Dict[str, object]]:
 
 if __name__ == "__main__":
 
-    '''base_url = "https://fr.wiki.ryzom.com/wiki/Portail:Zora%C3%AF"
+    base_url = "https://fr.wiki.ryzom.com/wiki/Chapitre_I%C2%B7II_-_Fraternit%C3%A9"
 
     if is_ignored_url(base_url, URL_TO_NOT_SCRAP):
         print(f"URL ignored : {base_url}")
     else:
         folder_name = "../data"
         data = scrap_useful_page_content(base_url)
-        save_data_to_file(data, folder_name,"test.txt")'''
+        save_data_to_file(data, folder_name,"test.txt")
 
-    base_url = "https://fr.wiki.ryzom.com"
+    '''base_url = "https://fr.wiki.ryzom.com"
     all_pages_url = f"{base_url}/wiki/Sp%C3%A9cial:Toutes_les_pages"
     folder_name = "../data/raw_data/raw_data_from_scraping/scraping_result"
     error_log_file = "errors.log"
@@ -402,8 +402,8 @@ if __name__ == "__main__":
             file_name = sanitize_filename(title) + ".txt"
             content = scrap_useful_page_content(url)
             save_data_to_file(content, folder_name, file_name)
-            time.sleep(0.25)
+            time.sleep(0.1)
         except Exception as e:
             error_message = f"Error on {url}: {e}"
             print(error_message)
-            log_error(error_message, error_log_file)
+            log_error(error_message, error_log_file)'''

@@ -12,8 +12,8 @@ def extract_data(scraped_file_path, raw_data_rag_path):
     file_name, _ = os.path.splitext(file_name)
 
     # Define output file paths
-    rag_csv_file = os.path.join(raw_data_rag_path, f"{file_name}_summary_table.csv")
-    rag_txt_file = os.path.join(raw_data_rag_path, f"{file_name}_text.txt")
+    rag_csv_file = os.path.join(raw_data_rag_path, f"{file_name} - fiche descriptive.csv")
+    rag_txt_file = os.path.join(raw_data_rag_path, f"{file_name}.txt")
 
     # Read the source file
     with open(scraped_file_path, "r", encoding="utf-8") as file:
@@ -53,6 +53,7 @@ def extract_data(scraped_file_path, raw_data_rag_path):
     else:
         # Save the full text for RAG
         with open(rag_txt_file, "w", encoding = "utf-8") as file:
+            file.write(f"Titre : {file_name}\n\n")
             file.write(file_content)
 
 if __name__ == "__main__":
