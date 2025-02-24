@@ -1,11 +1,11 @@
-from files_utiles import *
+from scraper_files_utiles import *
 from scraper_rules import AMBRE_TABLE_KEYS_STYLE
 
 def get_custom_text(element, ambre_table = False)  -> str:
     """
     Extracts text from an element with custom separator logic:
     - Adds separators (e.g., spaces) between elements, except for inline tags like <b>, <i>, etc.
-    - Adds a label "[→]" before link text, only if 50% or more of the line/cell is composed of links.
+    - (OUTDATED) Adds a label "[→]" before link text, only if 50% or more of the line/cell is composed of links.
     - Excludes content inside specific tags (e.g., <small>).
 
     :param element: A BeautifulSoup element to process.
@@ -80,7 +80,9 @@ def get_custom_text(element, ambre_table = False)  -> str:
                 if child.name == "a" and add_link_label:
                     link_text = get_custom_text(child)
                     if link_text:
-                        labeled_link = link_text if ambre_table else  f"[→ {link_text}]"
+                        #OUTDATED
+                        #labeled_link = link_text if ambre_table else  f"[→ {link_text}]"
+                        labeled_link = link_text if ambre_table else link_text
                         text_parts.append(labeled_link)
                 else:
                     text_parts.append(get_custom_text(child))
