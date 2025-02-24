@@ -32,9 +32,12 @@ def create_vectorstore(chunks, embedding_model_name, chroma_dir):
         documents.append(chunk_text)
         ids.append(f"doc_{idx}")
         embeddings.append(embedder.encode(chunk_text))
-        metadatas.append({"file_name": file_name.replace("_", " ")})
+        file_name = file_name.removesuffix(".txt").removesuffix(".csv").replace("_", " ")
+        file_name_keywords =  ", ".join(extract_keywords(file_name, nlp_model))
+        metadatas.append({"file_name_keywords": file_name_keywords})
 
     print("Adding embeddings to Chroma collection...")
+
     collection.add(
         documents = documents,
         embeddings = embeddings,

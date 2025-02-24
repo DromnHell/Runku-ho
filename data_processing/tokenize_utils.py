@@ -7,11 +7,32 @@ import gc
 import spacy
 import chromadb
 from chromadb.config import Settings
+from langchain.docstore.document import Document
 from transformers import AutoTokenizer
 from datasets import Dataset, DatasetDict
 from sentence_transformers import SentenceTransformer
+import re
 
 MINIMUM_TEXT_SIZE = 200
+
+def extract_keywords(text, nlp_model):
+    """
+    Extract the keywords of a text using spaCy.
+
+    :param text: The text from which we want to extract the keywords.
+    :param nlp_model : The nlp model used to extract the keywords.
+
+    :return: List of keyword.
+    """
+    doc = nlp_model(text)
+    keywords = [ent.text for ent in doc.ents]
+    # Handle manually the date sase.
+    date_pattern = re.compile(r'\b(1[0-9]{3}|2[0-9]{3})\b')
+    dates = date_pattern.findall(text)
+    for d in dates:
+        if d not in keywords:
+            keywords.append(d)
+    return keywords
 
 def segment_text_into_sentences(text, nlp_model):
     """

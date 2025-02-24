@@ -4,8 +4,7 @@ from transformers import (
     BitsAndBytesConfig, TrainingArguments, Trainer
 )
 from peft import LoraConfig, get_peft_model, TaskType
-import os
-
+import math
 
 def add_attention_mask(sample):
     """
@@ -31,10 +30,13 @@ def load_model(base_model_path):
 
     # Set a padding token (since LLaMA-2 does not have one by default)
     if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token  # Use <eos> as padding token
+        tokenizer.pad_token = tokenizer.eos_token  # Use <eos> as padding token.
 
-    # Enables 8-bit quantization which is optimized for an 8GB VRAM GPU and allow CPU offloading.
-    bnb_config = BitsAndBytesConfig(load_in_8bit_fp32_cpu_offload = True)
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit = True, # Enables 4-bit quantization which is optimized for an 8GB VRAM.
+        bnb_4bit_compute_dtype = "float16", # Use of float16 to stabilize the training.
+        bnb_4bit_quant_type = "nf4"  # NF4 format for greater precision.
+    )
 
     base_model = AutoModelForCausalLM.from_pretrained(
         base_model_path,
@@ -62,17 +64,18 @@ def get_training_args():
     return TrainingArguments(
         output_dir ="../data/models/lora_output",  # Directory for saving checkpoints.
         overwrite_output_dir = True,  # Overwrite existing files if they exist.
-        num_train_epochs = 3,  # 3 epochs are enough for LoRA fine-tuning.
+        num_train_epochs = 5,
         per_device_train_batch_size = 1,  # Small batch size (to avoid OOM errors).
-        gradient_accumulation_steps = 4,  # Simulates a larger batch (1 x 4 = 4).
-        evaluation_strategy = "epoch",  # Evaluate after each epoch.
+        gradient_accumulation_steps = 8,  # Simulates a larger batch (1 x 8 = 8).
+        eval_strategy = "epoch",  # Evaluate after each epoch.
         save_strategy = "epoch",  # Save a checkpoint at each epoch.
         logging_steps = 100,  # Log training progress every 100 steps.
-        learning_rate = 2e-4,  # Optimized LR for LoRA tuning.
+        learning_rate = 1e-4,  # Reduce the LR to avoid instability (2e-4 initially)
         fp16 = True,  # Use float16 precision to save memory and accelerate training.
-        save_total_limit = 2  # Keep only the last 2 checkpoints.
+        save_total_limit = 2,  # Keep only the last 2 checkpoints.
+        report_to = "none"  # Deactivate properly W&B.
+        #gradient_checkpointing = True  # To save VRAM.
     )
-
 
 def train_lora(base_model_with_lora, tokenizer, train_dataset, val_dataset):
     """
@@ -94,15 +97,13 @@ def train_lora(base_model_with_lora, tokenizer, train_dataset, val_dataset):
     )
 
     trainer.train()
-    trainer.save_model("../data/lora_output")
-    print("LoRA training complete. Model saved in Runku-ho/data/lora_output")
+    trainer.save_model("../data/models/lora_output")
+    print("LoRA training complete. Model saved in Runku-ho/data/models/lora_output")
 
 
 if __name__ == "__main__":
 
-    os.environ["WANDB_DISABLED"] = "true"
-
-    base_model_path = "meta-llama/Llama-2-7b-chat-hf"
+    base_model_path = "meta-llama/Llama-2-7b-hf"
 
     print("Loading tokenized dataset...")
     train_dataset, val_dataset = load_tokenized_data("../data/tokenized_data/tokenized_training_data")

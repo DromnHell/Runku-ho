@@ -4,7 +4,7 @@ if __name__ == "__main__":
 
     data_to_be_tokenized = "../data/raw_data/raw_data_for_training"
 
-    hf_tokenizer_model_name = "meta-llama/Llama-2-7b-chat-hf"
+    hf_tokenizer_model_name = "meta-llama/Llama-2-7b-hf"
     spacy_model_name = "fr_core_news_lg"
 
     chunk_max_length = 512
