@@ -7,7 +7,7 @@ def merge_lora_and_save(base_model_path, lora_adapters_path, fused_model_path):
     Loads the base model, applies the LoRA adapters, merges them into the model,
     and saves the fully fused model without deleting the original adapters.
     """
-    print("🔄 Loading base model...")
+    print("Loading base model...")
     base_model = AutoModelForCausalLM.from_pretrained(
         base_model_path,
         torch_dtype = torch.float16 # Loads the base model directly in float16 to avoid memory overload.
