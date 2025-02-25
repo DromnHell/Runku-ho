@@ -156,8 +156,8 @@ def initialize_llm_and_retriever(model, tokenizer, chroma_db_path, nlp_model, pr
     return langchain_llm, ensemble_retriever
 
 def initialize_rag_pipeline_for_writer_mode(model, tokenizer, chroma_db_path, nlp_model, prompt):
-
     """
+    CURRENTLY NOT USED.
     Builds a RAG pipeline using 'refine' chain type.
     This mode (Writer mode) aims for more creative, iterative answers.
     """
@@ -336,10 +336,11 @@ if __name__ == "__main__":
     print(f"Loading LLM ({mode}) and tokenizer...")
     model, tokenizer = load_model(selected_model_path)
 
-    print(f"Loading nlp model for filtering...")
-    nlp_model = spacy.load("fr_core_news_lg")
+    if choice == "2":
+        print(f"Loading nlp model for filtering...")
+        nlp_model = spacy.load("fr_core_news_lg")
 
-    print("Models loaded successfully !")
+    print("Model(s) loaded successfully !")
 
     print("\nEnter a prompt to generate text (type 'exit' to quit) :")
     while True:
