@@ -317,23 +317,24 @@ if __name__ == "__main__":
     chat_model_path = "meta-llama/Llama-2-7b-chat-hf"
     chroma_db_path = "../data/tokenized_data/chroma_db_for_RAG"
 
-    print("Select the Runku-ho mode :")
-    print("1 - Writer mode.")
-    print("2 - Archivist mode.")
-    choice = input("Entrez 1 ou 2 : ").strip()
-
-    try:
-        if choice == "1":
-            selected_model_path = creative_model_path
-            mode = "writer mode"
-        elif choice == "2":
-            selected_model_path = chat_model_path
-            mode = "archivist mode"
-    except Exception as e:
+    while True:
+        print("Select the Runku-ho mode :")
+        print("1 - Writer mode.")
+        print("2 - Archivist mode.")
+        choice = input("Entrez 1 ou 2 : ").strip()
+        if choice == "1" or choice == "2":
+            break
+        else:
             print("Invalid choice.")
-            sys.exit(0)
 
-    print(f"Loading LLM ({mode}) and tokenizer...")
+    if choice == "1":
+        selected_model_path = creative_model_path
+        mode = "writer mode"
+    elif choice == "2":
+        selected_model_path = chat_model_path
+        mode = "archivist mode"
+
+    print(f"Loading LLM and tokenizer...")
     model, tokenizer = load_model(selected_model_path)
 
     if choice == "2":
