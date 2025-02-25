@@ -341,7 +341,7 @@ if __name__ == "__main__":
         print(f"Loading nlp model for filtering...")
         nlp_model = spacy.load("fr_core_news_lg")
 
-    print("Model(s) loaded successfully !")
+    print("(Model(s) and tokenizer loaded successfully !")
 
     print("\nEnter a prompt to generate text (type 'exit' to quit) :")
     while True:
