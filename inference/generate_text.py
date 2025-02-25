@@ -350,7 +350,7 @@ if __name__ == "__main__":
             break
 
         if choice == "2":
-            print(f"Initializing RAG pipeline for {mode} mode...")
+            print(f"Initializing RAG pipeline for {mode}...")
             rag_chain = initialize_rag_pipeline_for_archivist_mode(model, tokenizer, chroma_db_path, nlp_model, prompt)
             print("RAG pipeline initialized !")
 
