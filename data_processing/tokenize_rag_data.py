@@ -3,11 +3,11 @@ from tokenize_utils import *
 def create_vectorstore(chunks, embedding_model_name, chroma_dir):
     """
     Given a list of text chunks, this function:
-    1) Creates embeddings for each chunk using a langage model.
+    1) Creates embeddings for each chunk using a language model.
     2) Stores them in a Chroma DB local instance.
 
     :param chunks: A list of text chunks.
-    :param embedding_model_name: A langage model name or path.
+    :param embedding_model_name: A language model name or path.
     :param chroma_dir: Where to store the Chroma index on disk.
     :return: The Chroma collection (you can later query it for retrieval).
     """

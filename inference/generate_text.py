@@ -10,10 +10,11 @@ from langchain.docstore.document import Document
 from stopping_criteria import *
 import spacy
 import re
+import sys
 
-def generate_text_without_RAG(model, tokenizer, prompt):
+def generate_text_without_RAG(model, tokenizer, prompt, max_new_tokens, temperature):
     """
-    Generate a text from a model. CURRENTLY NOT USED.
+    Generate a text from a prompt.
     """
     input_ids = tokenizer(prompt, return_tensors = "pt").input_ids.to(model.device)
 
@@ -28,14 +29,16 @@ def generate_text_without_RAG(model, tokenizer, prompt):
         output = model.generate(
             input_ids,
             attention_mask = attention_mask,  # Ensures the model correctly processes padded sequences.
-            max_length = 512, # Total text size (prompt + generated response).
-            temperature = 0.7, # Low (~0.3) → + consistent answers, High (~1.0) → + creative and varied.
+            max_new_tokens = max_new_tokens,
+            temperature = temperature, # Low (~0.3) → + consistent answers, High (~1.0) → + creative and varied.
             top_p = 0.9, # Selects first tokens whose cumulative probability exceeds top_p. So favors probable tokens.
-            pad_token_id = tokenizer.eos_token_id, # Prevents errors due to missing tokens [PAD].
-            stopping_criteria = stop_criteria
+            pad_token_id = tokenizer.eos_token_id # Prevents errors due to missing tokens [PAD].
+            #stopping_criteria = stop_criteria
     )
 
-    return tokenizer.decode(output[0], skip_special_tokens = True)
+    generated_text = tokenizer.decode(output[0], skip_special_tokens = True)
+
+    return {"result": generated_text}
 
 
 def extract_keywords(text, nlp_model):
@@ -153,8 +156,8 @@ def initialize_llm_and_retriever(model, tokenizer, chroma_db_path, nlp_model, pr
     return langchain_llm, ensemble_retriever
 
 def initialize_rag_pipeline_for_writer_mode(model, tokenizer, chroma_db_path, nlp_model, prompt):
-
     """
+    CURRENTLY NOT USED.
     Builds a RAG pipeline using 'refine' chain type.
     This mode (Writer mode) aims for more creative, iterative answers.
     """
@@ -314,10 +317,15 @@ if __name__ == "__main__":
     chat_model_path = "meta-llama/Llama-2-7b-chat-hf"
     chroma_db_path = "../data/tokenized_data/chroma_db_for_RAG"
 
-    print("Select the Runku-ho mode :")
-    print("1 - Writer mode.")
-    print("2 - Archivist mode.")
-    choice = input("Entrez 1 ou 2 : ").strip()
+    while True:
+        print("Select the Runku-ho mode :")
+        print("1 - Writer mode.")
+        print("2 - Archivist mode.")
+        choice = input("Entrez 1 ou 2 : ").strip()
+        if choice == "1" or choice == "2":
+            break
+        else:
+            print("Invalid choice.")
 
     if choice == "1":
         selected_model_path = creative_model_path
@@ -325,18 +333,15 @@ if __name__ == "__main__":
     elif choice == "2":
         selected_model_path = chat_model_path
         mode = "archivist mode"
-    else:
-        print("Invalid choice. Default archivist mode.")
-        selected_model_path = chat_model_path
-        mode = "archivist mode"
 
-    print(f"Loading LLM ({mode}) and tokenizer...")
-    fused_model, tokenizer = load_model(selected_model_path)
+    print(f"Loading LLM and tokenizer...")
+    model, tokenizer = load_model(selected_model_path)
 
-    print(f"Loading nlp model for filtering...")
-    nlp_model = spacy.load("fr_core_news_lg")
+    if choice == "2":
+        print(f"Loading nlp model for filtering...")
+        nlp_model = spacy.load("fr_core_news_lg")
 
-    print("Models loaded successfully !")
+    print("(Model(s) and tokenizer loaded successfully !")
 
     print("\nEnter a prompt to generate text (type 'exit' to quit) :")
     while True:
@@ -344,17 +349,17 @@ if __name__ == "__main__":
         if prompt.lower() == "exit":
             break
 
-        print(f"Initializing RAG pipeline ({mode})...")
-        if choice == "1":
-            rag_chain = initialize_rag_pipeline_for_writer_mode(fused_model, tokenizer, chroma_db_path, nlp_model, prompt)
-        elif choice == "2":
-            rag_chain = initialize_rag_pipeline_for_archivist_mode(fused_model, tokenizer, chroma_db_path, nlp_model, prompt)
-        else:
-            rag_chain = initialize_rag_pipeline_for_archivist_mode(fused_model, tokenizer, chroma_db_path, nlp_model, prompt)
-
-        print("RAG pipeline initialized !")
+        if choice == "2":
+            print(f"Initializing RAG pipeline for {mode}...")
+            rag_chain = initialize_rag_pipeline_for_archivist_mode(model, tokenizer, chroma_db_path, nlp_model, prompt)
+            print("RAG pipeline initialized !")
 
         print("\nGenerating...")
-        result = rag_chain.invoke({"query": prompt})
+
+        if choice == "1":
+            result = generate_text_without_RAG(model, tokenizer, prompt, 500, 0.7)
+        elif choice == "2":
+            result = rag_chain.invoke({"query": prompt})
+
         generated_text = result["result"]
         print(f"\nGenerated Text :\n{generated_text}\n")
