@@ -26,7 +26,7 @@ To use Runku-ho, download the repository and install the conda environment using
 - Train a LoRA model with quantization.
 - Generate text using different modes for creative writing and lore questioning.
 
-## USAGE
+## Usage
 
 Usage Instructions (in this order):
 
@@ -37,10 +37,10 @@ Usage Instructions (in this order):
 * Run ```train_with_lora_and_quantization.py```: Allows training a LoRA model with quantization, based on the ```meta-llama/Llama-2-7b-hf``` model.
 * Run ```generate_text.py```: Allow to generate text. Mode 1 (Writer) uses the fine-tuned LoRA model for creative writing. Mode 2 (Archivist) uses the ```meta-llama/Llama-2-7b-chat-hf``` model with a RAG to answer questions about Ryzom lore.
 
-## CONTRIBUTION
+## Contribution
 
 Contributions are welcome ! The RAG currently needs improvement as it does not perform well.
 
-## CONTACT
+## Contact
 
 For any questions, please contact me at remi.dromnelle@gmail.com.
