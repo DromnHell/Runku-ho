@@ -39,7 +39,7 @@ Usage Instructions (in this order):
 
 ## Contribution
 
-Contributions are welcome ! The RAG currently needs improvement as it does not perform well.
+Contributions are welcome ! The RAG needs improvement. But the current performance of the chat bot is probably due above all to data quality: as the French Ryzom wiki is collaborative and written by the community without much control, pages rarely follow a pattern, and content is often noisy, making data extraction difficult.
 
 ## Contact
 
